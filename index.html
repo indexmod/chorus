@@ -5,9 +5,6 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
 <title>CHORUS</title>
 
-<!-- Favicon: глаза и рот -->
-<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ccircle cx='50' cy='50' r='50' fill='black'/%3E%3Ccircle cx='35' cy='35' r='5' fill='white'/%3E%3Ccircle cx='65' cy='35' r='5' fill='white'/%3E%3Ccircle cx='50' cy='65' r='5' fill='white'/%3E%3C/svg%3E" type="image/svg+xml">
-
 <link href="https://fonts.googleapis.com/css2?family=Permanent+Marker&display=swap" rel="stylesheet">
 <style>
 @import url('https://fonts.googleapis.com/css2?family=EB+Garamond:wght@400..800&family=Verdana:wght@400&display=swap');
@@ -48,30 +45,29 @@ h2 {
   line-height:1.3;
 }
 
+/* Masonry grid */
 .grid {
-  display:grid;
-  grid-template-columns:repeat(auto-fill,minmax(150px,1fr));
-  grid-auto-rows:5px;
-  gap:0;
+  column-count: 4;
+  column-gap: 1px; /* минимальный зазор */
 }
 
 .item {
-  width:100%;
-  overflow:hidden;
-  cursor:pointer;
-  position:relative;
+  display: inline-block;
+  width: 100%;
+  margin: 0 0 1px;
+  position: relative;
+  cursor: pointer;
 }
 
 .item img,
 .item video,
 .item iframe {
-  width:100%;
+  width: 100%;
   display:block;
-  object-fit:cover;
+  object-fit: cover;
   border:none;
 }
 
-/* Номер в черном кружке */
 .item .number {
   position:absolute;
   left:5px;
@@ -92,12 +88,10 @@ h2 {
   margin-top:40px;
   font-size:16px;
 }
-.names-section h3 {
-  margin-bottom:10px;
-}
-.names-section ul {
-  padding-left:20px;
-}
+
+@media (max-width:1200px){ .grid{column-count:3;} }
+@media (max-width:900px){ .grid{column-count:2;} }
+@media (max-width:600px){ .grid{column-count:1;} }
 </style>
 </head>
 <body>
@@ -114,18 +108,48 @@ h2 {
 
 <div class="grid" id="previewGrid"></div>
 
-<div class="names-section" id="namesSection">
+<div class="names-section">
   <h3>Имена, соответствующие номерам:</h3>
-  <ul id="namesList"></ul>
+  <p id="namesLine"></p>
 </div>
 
 <script type="module">
 const repo = "indexmod/chorus";
 const grid = document.getElementById('previewGrid');
-const namesList = document.getElementById('namesList');
+const namesLine = document.getElementById("namesLine");
 const excludedFiles = ["DC Store"];
-const dummyNames = ["Yan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+
+let dummyNamesXML = `
+<names>
+  <name>Yan</name>
+  <name>Feb</name>
+  <name>Mar</name>
+  <name>Apr</name>
+  <name>May</name>
+  <name>Jun</name>
+  <name>Jul</name>
+  <name>Aug</name>
+  <name>Sep</name>
+  <name>Oct</name>
+  <name>Nov</name>
+  <name>Dec</name>
+</names>
+`;
+
+const parser = new DOMParser();
+const xmlDoc = parser.parseFromString(dummyNamesXML, "application/xml");
+const nameNodes = Array.from(xmlDoc.querySelectorAll("name"));
+
 let counter = 1;
+let namesLineText = "";
+
+function getNameForIndex(index){
+  if(index <= nameNodes.length){
+    return nameNodes[index-1].textContent;
+  } else {
+    return `New ${index}`;
+  }
+}
 
 function addPreview(url,type){
   const item = document.createElement('div');
@@ -149,31 +173,19 @@ function addPreview(url,type){
 
   item.appendChild(content);
 
-  // номер в кружке
   const number = document.createElement('div');
   number.className='number';
   number.textContent=counter;
   item.appendChild(number);
 
-  // добавляем имя к номеру
-  const name = dummyNames[(counter-1)%dummyNames.length];
-  const li = document.createElement('li');
-  li.textContent=`${counter}: ${name}`;
-  namesList.appendChild(li);
+  const name = getNameForIndex(counter);
+  if(counter>1) namesLineText += "; ";
+  namesLineText += `${counter}. ${name}`;
+  namesLine.textContent = namesLineText;
 
   counter++;
 
   item.addEventListener('click',()=>window.open(url,'_blank'));
-
-  function adjustSpan(){
-    const rowHeight=parseInt(getComputedStyle(grid).getPropertyValue('grid-auto-rows'));
-    const rowGap=parseInt(getComputedStyle(grid).getPropertyValue('gap'));
-    const span=Math.ceil((item.scrollHeight + rowGap)/(rowHeight + rowGap));
-    item.style.gridRowEnd='span '+span;
-  }
-
-  content.addEventListener('loadedmetadata',adjustSpan);
-  content.addEventListener('load',adjustSpan);
 
   grid.appendChild(item);
 }
@@ -194,8 +206,8 @@ async function loadRepoPreviews(){
       else if(f.name.endsWith('.webloc')){
         const res=await fetch(f.download_url);
         const text=await res.text();
-        const xmlDoc=new DOMParser().parseFromString(text,"application/xml");
-        const urlNode=xmlDoc.querySelector("string");
+        const xmlDocLocal=new DOMParser().parseFromString(text,"application/xml");
+        const urlNode=xmlDocLocal.querySelector("string");
         if(urlNode?.textContent) addPreview(urlNode.textContent,'html');
       }
       else if(/\.(png|jpg|jpeg|gif|webp)$/i.test(f.name)) addPreview(url,'image');
