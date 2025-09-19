@@ -1,28 +1,85 @@
 <!DOCTYPE html>
 <html lang="ru">
 <head>
-<meta charset="UTF-8" />
+<meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
 <title>CHORUS</title>
+<link href="https://fonts.googleapis.com/css2?family=Permanent+Marker&display=swap" rel="stylesheet">
 <style>
-  body { margin:0; padding:20px; background:#fff; }
-  h1 { font-family:'EB Garamond', serif; font-size:clamp(48px,10vw,200px); margin:0 0 20px; }
+  @import url('https://fonts.googleapis.com/css2?family=EB+Garamond:wght@400..800&family=Verdana:wght@400&display=swap');
+
+  body {
+    margin: 0;
+    padding: 40px;
+    font-family: Verdana, sans-serif;
+    background-color: #fff;
+    color: #000;
+  }
+
+  h1 {
+    font-family: 'EB Garamond', serif;
+    font-weight: lighter;
+    font-size: clamp(48px, 10vw, 200px);
+    margin: 0 0 10px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  h2 {
+    font-family: 'Permanent Marker', cursive;
+    font-weight: normal;
+    font-size: clamp(24px, 5vw, 100px);
+    margin: 0 0 40px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .container {
+    max-width: 1200px;
+    width: calc(100vw - 80px);
+    margin-bottom: 40px;
+    font-size: 20px;
+    line-height: 1.3;
+  }
 
   .grid {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
-    grid-auto-rows: 5px; /* маленькая базовая высота для span расчёта */
-    gap: 1px;
+    grid-auto-rows: 5px;
+    gap: 0px; /* элементы прилегают */
   }
-  .item { width:100%; overflow:hidden; cursor:pointer; }
+
+  .item {
+    width: 100%;
+    overflow: hidden;
+    cursor: pointer;
+  }
+
   .item img,
   .item video,
-  .item iframe { width:100%; height:auto; display:block; }
-
+  .item iframe {
+    width: 100%;
+    height: auto;
+    display: block;
+    object-fit: cover;
+    border: none;
+  }
 </style>
 </head>
 <body>
+
 <h1>CHORUS</h1>
+<h2>by Andr o Dei</h2>
+
+<div class="container">
+  <p>
+    Хаб коллекции, где скульптура, живопись, принты и мультимедиа объединяются исследованием эмодзи, иероглифа, человеческого лица и упрощённой допиктограммы.
+    Это продолжение идей <a href="https://birds.indexmod.xyz" style="display:inline-block;background:#ddd;padding:2px 6px;border-radius:10px;text-decoration:none;color:black;"><strong>Birds</strong></a>.
+  </p>
+</div>
+
 <div class="grid" id="previewGrid"></div>
 
 <script type="module">
@@ -36,19 +93,28 @@ function addPreview(url, type) {
 
   let content;
   if(type==='html'){
-    content = document.createElement('iframe'); content.src=url;
+    content = document.createElement('iframe');
+    content.src = url;
   } else if(type==='image'){
-    content = document.createElement('img'); content.src=url;
+    content = document.createElement('img');
+    content.src = url;
   } else if(type==='video'){
-    content = document.createElement('video'); content.src=url; content.controls=false;
+    content = document.createElement('video');
+    content.src = url;
+    content.autoplay = true;
+    content.muted = true;
+    content.playsInline = true;
+    content.loop = true;
   } else{
-    content = document.createElement('a'); content.href=url; content.target='_blank';
+    content = document.createElement('a');
+    content.href = url;
+    content.target='_blank';
   }
 
   item.appendChild(content);
   item.addEventListener('click',()=>window.open(url,'_blank'));
 
-  content.addEventListener('load',()=>{ // для img/iframe определяем span по высоте
+  content.addEventListener('load',()=>{
     const rowHeight = parseInt(getComputedStyle(grid).getPropertyValue('grid-auto-rows'));
     const rowGap = parseInt(getComputedStyle(grid).getPropertyValue('gap'));
     const span = Math.ceil((content.getBoundingClientRect().height + rowGap)/ (rowHeight + rowGap));
@@ -86,5 +152,6 @@ async function loadRepoPreviews(){
 
 loadRepoPreviews();
 </script>
+
 </body>
 </html>
