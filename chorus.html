@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <meta property="og:image" content="cover.png" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Chorus</title>
+  <meta property="og:description" content="Chorus — минималистичная платформа для мгновенной публикации веб-экспериментов, изображений и ссылок. Просто положи файлы в репозиторий — и они появятся здесь." />
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ccircle cx='50' cy='50' r='45' fill='red' /%3E%3C/svg%3E" type="image/svg+xml">
+  <link href="https://fonts.googleapis.com/css2?family=Permanent+Marker&display=swap" rel="stylesheet">
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=EB+Garamond:wght@400..800&family=Verdana:wght@400&display=swap');
+    body {
+      margin: 0;
+      padding: 40px;
+      font-family: Verdana, sans-serif;
+      background-color: #fff;
+      color: #000;
+    }
+    .container {
+      max-width: 1200px;
+      width: calc(100vw - 80px);
+      padding: 5px;
+      text-align: left;
+      font-size: 20px;
+      line-height: 1.3;
+    }
+    h1 {
+      font-family: 'EB Garamond', serif;
+      font-weight: lighter;
+      margin-bottom: 10px;
+      font-size: clamp(48px, 10vw, 200px);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    h2 {
+      font-family: 'Permanent Marker', cursive;
+      font-weight: normal;
+      margin-top: -10px;
+      margin-bottom: 40px;
+      font-size: clamp(24px, 5vw, 100px);
+      width: 50%;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+      gap: 40px;
+    }
+    .item {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+    iframe, img, video {
+      width: 100%;
+      max-height: 300px;
+      object-fit: contain;
+      border: none;
+      border-radius: 8px;
+      background: #fafafa;
+    }
+    .title {
+      margin-top: 10px;
+      font-size: 18px;
+      text-align: center;
+    }
+    .title a {
+      text-decoration: none;
+      color: black;
+    }
+    .title a:hover {
+      text-decoration: underline;
+    }
+  </style>
+</head>
+<body>
+  <h1>CHORUS</h1>
+  <h2>by Andr o Dei</h2>
+
+  <div class="container">
+    <p>
+      Chorus — это лёгкая система-платформа: кладёшь в репозиторий HTML, PNG, JPG, GIF, MP4 или даже webloc — и они мгновенно появляются здесь в сетке предпросмотра.
+      Это продолжение идей <a href="https://birds.indexmod.xyz" style="display:inline-block;background:#ddd;padding:2px 6px;border-radius:10px;text-decoration:none;color:black;"><strong>Birds</strong></a>.
+    </p>
+  </div>
+
+  <div class="grid" id="previewGrid"></div>
+
+  <script type="module">
+    const repo = "indexmod/chorus"; // замените на свой
+    const grid = document.getElementById('previewGrid');
+
+    function stripExtension(filename) {
+      return filename.replace(/\.[^/.]+$/, "");
+    }
+
+    function addPreview(url, label, type) {
+      const item = document.createElement('div');
+      item.className = 'item';
+
+      let content;
+      if (type === 'html') {
+        content = document.createElement('iframe');
+        content.src = url;
+      } else if (type === 'image') {
+        content = document.createElement('img');
+        content.src = url;
+      } else if (type === 'video') {
+        content = document.createElement('video');
+        content.src = url;
+        content.controls = true;
+      } else {
+        content = document.createElement('a');
+        content.href = url;
+        content.textContent = 'Скачать файл';
+        content.target = '_blank';
+      }
+
+      const title = document.createElement('div');
+      title.className = 'title';
+      const a = document.createElement('a');
+      a.href = url;
+      a.textContent = label;
+      a.target = '_blank';
+      title.appendChild(a);
+
+      item.appendChild(content);
+      item.appendChild(title);
+      grid.appendChild(item);
+    }
+
+    async function loadRepoPreviews() {
+      try {
+        const response = await fetch(`https://api.github.com/repos/${repo}/contents/`);
+        if (!response.ok) throw new Error(`HTTP ошибка: ${response.status}`);
+        const files = await response.json();
+
+        const filtered = files.filter(f => !/^index\.html?$/i.test(f.name));
+
+        const owner = repo.split('/')[0];
+        const repoName = repo.split('/')[1];
+
+        for (const f of filtered) {
+          const url = `https://${owner}.github.io/${repoName}/${f.name}`;
+          const label = stripExtension(f.name);
+
+          if (f.name.endsWith('.html')) {
+            addPreview(url, label, 'html');
+          } else if (f.name.endsWith('.webloc')) {
+            const res = await fetch(f.download_url);
+            const text = await res.text();
+            const xmlDoc = new DOMParser().parseFromString(text, "application/xml");
+            const urlNode = xmlDoc.querySelector("string");
+            if (urlNode?.textContent) addPreview(urlNode.textContent, label, 'html');
+          } else if (/\.(png|jpg|jpeg|gif|webp)$/i.test(f.name)) {
+            addPreview(url, label, 'image');
+          } else if (/\.(mp4|webm|mov)$/i.test(f.name)) {
+            addPreview(url, label, 'video');
+          } else {
+            addPreview(url, label, 'other');
+          }
+        }
+      } catch (e) {
+        console.error("Ошибка при загрузке файлов из репозитория:", e);
+      }
+    }
+
+    loadRepoPreviews();
+  </script>
+</body>
+</html>
