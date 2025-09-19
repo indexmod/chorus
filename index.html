@@ -5,69 +5,98 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
 <title>CHORUS</title>
 
-<!-- Favicon: черный круг с тремя белыми точками -->
-<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ccircle cx='50' cy='50' r='50' fill='black'/%3E%3Ccircle cx='30' cy='50' r='5' fill='white'/%3E%3Ccircle cx='50' cy='50' r='5' fill='white'/%3E%3Ccircle cx='70' cy='50' r='5' fill='white'/%3E%3C/svg%3E" type="image/svg+xml">
+<!-- Favicon: глаза и рот -->
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ccircle cx='50' cy='50' r='50' fill='black'/%3E%3Ccircle cx='35' cy='35' r='5' fill='white'/%3E%3Ccircle cx='65' cy='35' r='5' fill='white'/%3E%3Ccircle cx='50' cy='65' r='5' fill='white'/%3E%3C/svg%3E" type="image/svg+xml">
 
 <link href="https://fonts.googleapis.com/css2?family=Permanent+Marker&display=swap" rel="stylesheet">
 <style>
 @import url('https://fonts.googleapis.com/css2?family=EB+Garamond:wght@400..800&family=Verdana:wght@400&display=swap');
 
 body {
-  margin: 0;
-  padding: 40px;
+  margin:0;
+  padding:40px;
   font-family: Verdana, sans-serif;
-  background-color: #fff;
-  color: #000;
+  background:#fff;
+  color:#000;
 }
 
 h1 {
-  font-family: 'EB Garamond', serif;
-  font-weight: lighter;
-  font-size: clamp(48px, 10vw, 200px);
-  margin: 0 0 10px;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+  font-family:'EB Garamond', serif;
+  font-weight:lighter;
+  font-size:clamp(48px,10vw,200px);
+  margin:0 0 10px;
+  white-space:nowrap;
+  overflow:hidden;
+  text-overflow:ellipsis;
 }
 
 h2 {
-  font-family: 'Permanent Marker', cursive;
-  font-weight: normal;
-  font-size: clamp(24px, 5vw, 100px);
-  margin: 0 0 40px;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+  font-family:'Permanent Marker', cursive;
+  font-weight:normal;
+  font-size:clamp(24px,5vw,100px);
+  margin:0 0 40px;
+  white-space:nowrap;
+  overflow:hidden;
+  text-overflow:ellipsis;
 }
 
 .container {
-  max-width: 1200px;
-  width: calc(100vw - 80px);
-  margin-bottom: 40px;
-  font-size: 20px;
-  line-height: 1.3;
+  max-width:1200px;
+  width:calc(100vw - 80px);
+  margin-bottom:40px;
+  font-size:20px;
+  line-height:1.3;
 }
 
 .grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
-  grid-auto-rows: 5px; /* базовая высота для masonry */
-  gap: 0; /* элементы прилегают */
+  display:grid;
+  grid-template-columns:repeat(auto-fill,minmax(150px,1fr));
+  grid-auto-rows:5px;
+  gap:0;
 }
 
 .item {
-  width: 100%;
-  overflow: hidden;
-  cursor: pointer;
+  width:100%;
+  overflow:hidden;
+  cursor:pointer;
+  position:relative;
 }
 
 .item img,
 .item video,
 .item iframe {
-  width: 100%;
-  display: block;
-  object-fit: cover;
-  border: none;
+  width:100%;
+  display:block;
+  object-fit:cover;
+  border:none;
+}
+
+/* Номер в черном кружке */
+.item .number {
+  position:absolute;
+  left:5px;
+  bottom:5px;
+  width:25px;
+  height:25px;
+  border-radius:50%;
+  background:black;
+  color:white;
+  font-size:14px;
+  font-weight:bold;
+  display:flex;
+  justify-content:center;
+  align-items:center;
+}
+
+.names-section {
+  margin-top:40px;
+  font-size:16px;
+}
+.names-section h3 {
+  margin-bottom:10px;
+}
+.names-section ul {
+  padding-left:20px;
 }
 </style>
 </head>
@@ -78,56 +107,73 @@ h2 {
 
 <div class="container">
 <p>
-Хаб коллекции, где скульптура, живопись, принты и мультимедиа объединяются исследованием эмодзи, иероглифа, человеческого лица и упрощённой допиктограммы.
+Превью коллекции, где скульптура, живопись, принты и мультимедиа объединяются исследованием эмодзи, иероглифа, человеческого лица и упрощённой допиктограммы.
 Это продолжение идей <a href="https://birds.indexmod.xyz" style="display:inline-block;background:#ddd;padding:2px 6px;border-radius:10px;text-decoration:none;color:black;"><strong>Birds</strong></a>.
 </p>
 </div>
 
 <div class="grid" id="previewGrid"></div>
 
+<div class="names-section" id="namesSection">
+  <h3>Имена, соответствующие номерам:</h3>
+  <ul id="namesList"></ul>
+</div>
+
 <script type="module">
 const repo = "indexmod/chorus";
 const grid = document.getElementById('previewGrid');
+const namesList = document.getElementById('namesList');
 const excludedFiles = ["DC Store"];
+const dummyNames = ["Yan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+let counter = 1;
 
-function addPreview(url, type){
+function addPreview(url,type){
   const item = document.createElement('div');
-  item.className = 'item';
+  item.className='item';
 
   let content;
   if(type==='html'){
-    content = document.createElement('iframe');
-    content.src = url;
+    content=document.createElement('iframe'); content.src=url;
   } else if(type==='image'){
-    content = document.createElement('img');
-    content.src = url;
+    content=document.createElement('img'); content.src=url;
   } else if(type==='video'){
-    content = document.createElement('video');
-    content.src = url;
-    content.autoplay = true;
-    content.muted = true;
-    content.playsInline = true;
-    content.loop = true;
+    content=document.createElement('video');
+    content.src=url;
+    content.autoplay=true;
+    content.muted=true;
+    content.playsInline=true;
+    content.loop=true;
   } else{
-    content = document.createElement('a');
-    content.href = url;
-    content.target='_blank';
+    content=document.createElement('a'); content.href=url; content.target='_blank';
   }
 
   item.appendChild(content);
+
+  // номер в кружке
+  const number = document.createElement('div');
+  number.className='number';
+  number.textContent=counter;
+  item.appendChild(number);
+
+  // добавляем имя к номеру
+  const name = dummyNames[(counter-1)%dummyNames.length];
+  const li = document.createElement('li');
+  li.textContent=`${counter}: ${name}`;
+  namesList.appendChild(li);
+
+  counter++;
+
   item.addEventListener('click',()=>window.open(url,'_blank'));
 
-  // Masonry span
   function adjustSpan(){
-    const rowHeight = parseInt(getComputedStyle(grid).getPropertyValue('grid-auto-rows'));
-    const rowGap = parseInt(getComputedStyle(grid).getPropertyValue('gap'));
-    const span = Math.ceil((item.scrollHeight + rowGap)/(rowHeight + rowGap));
-    item.style.gridRowEnd = 'span ' + span;
+    const rowHeight=parseInt(getComputedStyle(grid).getPropertyValue('grid-auto-rows'));
+    const rowGap=parseInt(getComputedStyle(grid).getPropertyValue('gap'));
+    const span=Math.ceil((item.scrollHeight + rowGap)/(rowHeight + rowGap));
+    item.style.gridRowEnd='span '+span;
   }
 
-  // Для видео и изображений
-  content.addEventListener('loadedmetadata', adjustSpan);
-  content.addEventListener('load', adjustSpan);
+  content.addEventListener('loadedmetadata',adjustSpan);
+  content.addEventListener('load',adjustSpan);
 
   grid.appendChild(item);
 }
@@ -136,31 +182,30 @@ async function loadRepoPreviews(){
   try{
     const response = await fetch(`https://api.github.com/repos/${repo}/contents/`);
     if(!response.ok) throw new Error(`HTTP ошибка: ${response.status}`);
-    const files = await response.json();
-    const owner = repo.split('/')[0];
-    const repoName = repo.split('/')[1];
+    const files=await response.json();
+    const owner=repo.split('/')[0];
+    const repoName=repo.split('/')[1];
 
     for(const f of files){
       if(/^index\.html?$/i.test(f.name) || excludedFiles.includes(f.name)) continue;
-      const url = `https://${owner}.github.io/${repoName}/${f.name}`;
+      const url=`https://${owner}.github.io/${repoName}/${f.name}`;
 
       if(f.name.endsWith('.html')) addPreview(url,'html');
       else if(f.name.endsWith('.webloc')){
-        const res = await fetch(f.download_url);
-        const text = await res.text();
-        const xmlDoc = new DOMParser().parseFromString(text,"application/xml");
-        const urlNode = xmlDoc.querySelector("string");
+        const res=await fetch(f.download_url);
+        const text=await res.text();
+        const xmlDoc=new DOMParser().parseFromString(text,"application/xml");
+        const urlNode=xmlDoc.querySelector("string");
         if(urlNode?.textContent) addPreview(urlNode.textContent,'html');
       }
       else if(/\.(png|jpg|jpeg|gif|webp)$/i.test(f.name)) addPreview(url,'image');
       else if(/\.(mp4|webm|mov)$/i.test(f.name)) addPreview(url,'video');
       else addPreview(url,'other');
     }
-  }catch(e){ console.error("Ошибка при загрузке файлов:",e);}
+  }catch(e){console.error("Ошибка при загрузке файлов:",e);}
 }
 
 loadRepoPreviews();
 </script>
-
 </body>
 </html>
