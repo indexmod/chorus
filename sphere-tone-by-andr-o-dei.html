@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Круг-слайдер</title>
+  <title>Круг-слайдер + линии</title>
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
 
@@ -20,6 +20,25 @@
       background-color: white; /* белый круг */
       border-radius: 50%;
       transition: width 0.2s, height 0.2s;
+      margin-bottom: 100px; /* чтобы линии были выше */
+    }
+
+    .lines {
+      position: relative;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      margin-bottom: 150px;
+    }
+
+    .line {
+      width: 200px;
+      height: 20px;
+      background: black;
+      position: relative;
+      transform-origin: center;
+      margin: 25px 0;
+      transition: transform 0.1s linear;
     }
 
     .slider-wrapper {
@@ -63,6 +82,14 @@
 
   <div id="circle" class="circle" style="width: 150px; height: 150px;"></div>
 
+  <!-- Блок линий -->
+  <div class="lines">
+    <div id="line1" class="line"></div>
+    <div id="line2" class="line"></div>
+    <div style="height:200px"></div> <!-- расстояние до нижней линии -->
+    <div id="line3" class="line"></div>
+  </div>
+
   <div class="slider-wrapper">
     <input type="range" id="sizeSlider" min="50" max="400" value="150">
   </div>
@@ -70,6 +97,8 @@
   <script>
     const circle = document.getElementById('circle');
     const slider = document.getElementById('sizeSlider');
+    const line1 = document.getElementById('line1');
+    const line2 = document.getElementById('line2');
 
     // Инициализация Web Audio API
     const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
@@ -89,19 +118,4 @@
       }
 
       // меняем частоту от 200 до 1000 Гц
-      const freq = 200 + (slider.value - 50) * 2;
-      oscillator.frequency.setValueAtTime(freq, audioCtx.currentTime);
-    });
-
-    // Отключение звука, если пользователь отпустил слайдер
-    slider.addEventListener('change', () => {
-      if (oscillator) {
-        oscillator.stop();
-        oscillator.disconnect();
-        oscillator = null;
-      }
-    });
-  </script>
-
-</body>
-</html>
+      const freq = 200 + (slider.value -
