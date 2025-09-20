@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Круг-слайдер</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    html, body {
+      height: 100%;
+      background-color: black; /* черный фон */
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-direction: column;
+    }
+
+    .circle {
+      background-color: white; /* белый круг */
+      border-radius: 50%;
+      transition: width 0.2s, height 0.2s;
+    }
+
+    .slider-wrapper {
+      position: fixed;
+      bottom: 30px;
+      left: 50%;
+      transform: translateX(-50%);
+    }
+
+    input[type=range] {
+      width: 300px;
+      appearance: none;
+      height: 6px;
+      background: white;
+      border-radius: 3px;
+      outline: none;
+      cursor: pointer;
+    }
+
+    input[type=range]::-webkit-slider-thumb {
+      appearance: none;
+      width: 20px;
+      height: 20px;
+      background: black; /* черный бегунок */
+      border-radius: 50%;
+      cursor: pointer;
+      border: 2px solid white;
+    }
+
+    input[type=range]::-moz-range-thumb {
+      width: 20px;
+      height: 20px;
+      background: black;
+      border-radius: 50%;
+      border: 2px solid white;
+      cursor: pointer;
+    }
+  </style>
+</head>
+<body>
+
+  <div id="circle" class="circle" style="width: 150px; height: 150px;"></div>
+
+  <div class="slider-wrapper">
+    <input type="range" id="sizeSlider" min="50" max="400" value="150">
+  </div>
+
+  <script>
+    const circle = document.getElementById('circle');
+    const slider = document.getElementById('sizeSlider');
+
+    // Инициализация Web Audio API
+    const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    let oscillator = null;
+
+    slider.addEventListener('input', () => {
+      const size = slider.value;
+      circle.style.width = `${size}px`;
+      circle.style.height = `${size}px`;
+
+      // создаем или обновляем звук
+      if (!oscillator) {
+        oscillator = audioCtx.createOscillator();
+        oscillator.type = "sine";
+        oscillator.connect(audioCtx.destination);
+        oscillator.start();
+      }
+
+      // меняем частоту от 200 до 1000 Гц
+      const freq = 200 + (slider.value - 50) * 2;
+      oscillator.frequency.setValueAtTime(freq, audioCtx.currentTime);
+    });
+
+    // Отключение звука, если пользователь отпустил слайдер
+    slider.addEventListener('change', () => {
+      if (oscillator) {
+        oscillator.stop();
+        oscillator.disconnect();
+        oscillator = null;
+      }
+    });
+  </script>
+
+</body>
+</html>
