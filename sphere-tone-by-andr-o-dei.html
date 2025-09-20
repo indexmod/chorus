@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Круг-слайдер + линии</title>
+  <title>Круг-слайдер</title>
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
 
@@ -20,25 +20,6 @@
       background-color: white; /* белый круг */
       border-radius: 50%;
       transition: width 0.2s, height 0.2s;
-      margin-bottom: 100px; /* чтобы линии были выше */
-    }
-
-    .lines {
-      position: relative;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      margin-bottom: 150px;
-    }
-
-    .line {
-      width: 200px;
-      height: 20px;
-      background: black;
-      position: relative;
-      transform-origin: center;
-      margin: 25px 0;
-      transition: transform 0.1s linear;
     }
 
     .slider-wrapper {
@@ -76,18 +57,54 @@
       border: 2px solid white;
       cursor: pointer;
     }
+
+    /* Линии поверх макета */
+    .overlay-lines {
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      z-index: 10;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      pointer-events: none; /* чтобы не мешать кликам */
+    }
+
+    .top-lines {
+      display: flex;
+      flex-direction: row;
+      align-items: center;
+      justify-content: center;
+      margin-bottom: 100px; /* расстояние до нижней линии */
+    }
+
+    .line {
+      width: 200px;
+      height: 20px;
+      background: black;
+      transform-origin: center;
+      transition: transform 0.1s linear;
+    }
+
+    .gap {
+      width: 50px; /* разрыв */
+      height: 20px;
+    }
   </style>
 </head>
 <body>
 
   <div id="circle" class="circle" style="width: 150px; height: 150px;"></div>
 
-  <!-- Блок линий -->
-  <div class="lines">
-    <div id="line1" class="line"></div>
-    <div id="line2" class="line"></div>
-    <div style="height:200px"></div> <!-- расстояние до нижней линии -->
-    <div id="line3" class="line"></div>
+  <!-- Линии поверх всего -->
+  <div class="overlay-lines">
+    <div class="top-lines">
+      <div id="lineLeft" class="line"></div>
+      <div class="gap"></div>
+      <div id="lineRight" class="line"></div>
+    </div>
+    <div id="lineBottom" class="line"></div>
   </div>
 
   <div class="slider-wrapper">
@@ -97,8 +114,8 @@
   <script>
     const circle = document.getElementById('circle');
     const slider = document.getElementById('sizeSlider');
-    const line1 = document.getElementById('line1');
-    const line2 = document.getElementById('line2');
+    const lineLeft = document.getElementById('lineLeft');
+    const lineRight = document.getElementById('lineRight');
 
     // Инициализация Web Audio API
     const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
@@ -118,4 +135,30 @@
       }
 
       // меняем частоту от 200 до 1000 Гц
-      const freq = 200 + (slider.value -
+      const freq = 200 + (slider.value - 50) * 2;
+      oscillator.frequency.setValueAtTime(freq, audioCtx.currentTime);
+
+      // угол наклона верхних линий (от 0° до 20°)
+      const angle = ((slider.value - 225) / 175) * 20;
+
+      // Левая линия: край (левый) вниз, внутренний край (правый) вверх
+      lineLeft.style.transformOrigin = "right center";
+      lineLeft.style.transform = `rotate(${angle}deg)`;
+
+      // Правая линия: край (правый) вниз, внутренний край (левый) вверх
+      lineRight.style.transformOrigin = "left center";
+      lineRight.style.transform = `rotate(${-angle}deg)`;
+    });
+
+    // Отключение звука, если пользователь отпустил слайдер
+    slider.addEventListener('change', () => {
+      if (oscillator) {
+        oscillator.stop();
+        oscillator.disconnect();
+        oscillator = null;
+      }
+    });
+  </script>
+
+</body>
+</html>
