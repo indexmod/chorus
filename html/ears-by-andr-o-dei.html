@@ -1,0 +1,328 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>C   H   O   R   U   S</title>
+
+<link href="https://fonts.googleapis.com/css2?family=Permanent+Marker&display=swap" rel="stylesheet">
+<style>
+@import url('https://fonts.googleapis.com/css2?family=EB+Garamond:wght@400..800&family=Verdana:wght@400&display=swap');
+
+body {
+  margin:0;
+  padding:40px;
+  font-family: Verdana, sans-serif;
+  background:#fff;
+  color:#000;
+}
+
+h1 {
+  font-family:'EB Garamond', serif;
+  font-weight:lighter;
+  font-size:clamp(48px,10vw,200px);
+  margin:0 0 10px;
+  white-space:nowrap;
+  overflow:hidden;
+  text-overflow:ellipsis;
+}
+
+h2 {
+  font-family:'Permanent Marker', cursive;
+  font-weight:normal;
+  font-size:clamp(24px,5vw,100px);
+  margin:0 0 40px;
+  white-space:nowrap;
+  overflow:hidden;
+  text-overflow:ellipsis;
+}
+
+.container {
+  max-width:1200px;
+  width:calc(100vw - 80px);
+  margin-bottom:40px;
+  font-size:20px;
+  line-height:1.3;
+}
+
+/* Masonry grid */
+.grid {
+  column-count: 4;
+  column-gap: 1px;
+}
+
+.item {
+  display: inline-block;
+  width: 100%;
+  margin: 0 0 1px;
+  position: relative;
+  cursor: pointer;
+}
+
+.item.large {
+  width: 200% !important;   /* шире */
+  grid-column: span 2;      /* занимает 2 колонки */
+  grid-row: span 2;         /* занимает 2 ряда */
+}
+
+.item img,
+.item video,
+.item iframe {
+  width: 100%;
+  display:block;
+  object-fit: cover;
+  border:none;
+}
+
+/* увеличиваем содержимое у большого блока */
+.item.large iframe,
+.item.large img,
+.item.large video {
+  height: 100%;
+  min-height: 400px; /* выше */
+}
+
+.item .number {
+  position:absolute;
+  left:5px;
+  bottom:5px;
+  width:25px;
+  height:25px;
+  border-radius:50%;
+  background:black;
+  color:white;
+  font-size:14px;
+  font-weight:bold;
+  display:flex;
+  justify-content:center;
+  align-items:center;
+}
+
+.names-section {
+  margin-top:40px;
+  font-size:16px;
+}
+
+@media (max-width:1200px){ .grid{column-count:3;} }
+@media (max-width:900px){ .grid{column-count:2;} }
+@media (max-width:600px){ .grid{column-count:1;} }
+</style>
+
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ccircle cx='50' cy='50' r='45' fill='black' /%3E%3Ccircle cx='35' cy='35' r='5' fill='white' /%3E%3Ccircle cx='65' cy='35' r='5' fill='white' /%3E%3Ccircle cx='50' cy='65' r='5' fill='white' /%3E%3C/svg%3E" type="image/svg+xml">
+
+</head>
+<body>
+
+<h1>C   H   O   R   U   S</h1>
+<h2>by Andr o Dei</h2>
+
+<div class="container">
+  <p>
+    Описание каталога коллекции, где скульптура, живопись, принты и мультимедиа объединяются исследованием эмодзи, иероглифа, человеческого лица и упрощённой до proto пиктограммы.
+    Перейти к <a href="#namesLine" style="display:inline-block;background:#ddd;padding:2px 6px;border-radius:10px;text-decoration:none;color:black;"><strong>списку</strong></a>.
+  </p>
+</div>
+
+<div class="grid" id="previewGrid"></div>
+
+<div class="names-section">
+  <h3>Cataloge:</h3>
+  <p id="namesLine"></p>
+</div>
+
+<script type="module">
+const repo = "indexmod/chorus";
+const grid = document.getElementById('previewGrid');
+const namesLine = document.getElementById("namesLine");
+const excludedFiles = ["DC Store"];
+
+let dummyNamesXML = `
+<names>
+  <name>Ushki</name>
+  <name>Chorus 793</name>
+  <name>Mar</name>
+  <name>Apr</name>
+  <name>May</name>
+  <name>Jun</name>
+  <name>Jul</name>
+  <name>Aug</name>
+  <name>Sep</name>
+  <name>Oct</name>
+  <name>Nov</name>
+  <name>Dec</name>
+</names>
+`;
+
+const parser = new DOMParser();
+const xmlDoc = parser.parseFromString(dummyNamesXML, "application/xml");
+const nameNodes = Array.from(xmlDoc.querySelectorAll("name"));
+
+let counter = 1;
+let namesLineText = "";
+
+function getNameForIndex(index){
+  if(index <= nameNodes.length){
+    return nameNodes[index-1].textContent;
+  } else {
+    return `New ${index}`;
+  }
+}
+
+function addPreview(url,type,isLarge=false){
+  const item = document.createElement('div');
+  item.className='item';
+  if(isLarge) item.classList.add("large");
+
+  let content;
+  if(type==='html'){
+    content=document.createElement('iframe'); content.src=url;
+  } else if(type==='image'){
+    content=document.createElement('img'); content.src=url;
+  } else if(type==='video'){
+    content=document.createElement('video');
+    content.src=url;
+    content.autoplay=true;
+    content.muted=true;
+    content.playsInline=true;
+    content.loop=true;
+  } else{
+    content=document.createElement('a'); content.href=url; content.target='_blank';
+  }
+
+  item.appendChild(content);
+
+  const number = document.createElement('div');
+  number.className='number';
+  number.textContent=counter;
+  item.appendChild(number);
+
+  const name = getNameForIndex(counter);
+  if(counter>1) namesLineText += "; ";
+  namesLineText += `${counter}. ${name}`;
+  namesLine.textContent = namesLineText;
+
+  counter++;
+
+  item.addEventListener('click',()=>window.open(url,'_blank'));
+
+  grid.appendChild(item);
+}
+
+async function loadRepoPreviews(){
+  try{
+    const response = await fetch(`https://api.github.com/repos/${repo}/contents/`);
+    if(!response.ok) throw new Error(`HTTP ошибка: ${response.status}`);
+    const files=await response.json();
+    const owner=repo.split('/')[0];
+    const repoName=repo.split('/')[1];
+
+    // Игнорируем папки и скрытые файлы
+    const onlyFiles = files.filter(f => f.type==="file" && !f.name.startsWith('.') && !excludedFiles.includes(f.name));
+
+    // Выбираем html-файлы и берём один случайный
+    const htmlFiles = onlyFiles.filter(f => f.name.endsWith(".html") && !/^index\.html?$/i.test(f.name));
+    let specialHtml = null;
+    if(htmlFiles.length>0){
+      specialHtml = htmlFiles[Math.floor(Math.random()*htmlFiles.length)];
+      const url=`https://${owner}.github.io/${repoName}/${specialHtml.name}`;
+      addPreview(url,'html',true); // первый, крупный
+    }
+
+    // Остальные файлы (кроме выбранного html)
+    for(const f of onlyFiles){
+      if(specialHtml && f.name===specialHtml.name) continue;
+
+      const url=`https://${owner}.github.io/${repoName}/${f.name}`;
+
+      if(/\.(png|jpg|jpeg|gif|webp)$/i.test(f.name)) addPreview(url,'image');
+      else if(/\.(mp4|webm|mov)$/i.test(f.name)) addPreview(url,'video');
+      else if(f.name.endsWith('.webloc')){
+        const res=await fetch(f.download_url);
+        const text=await res.text();
+        const xmlDocLocal=new DOMParser().parseFromString(text,"application/xml");
+        const urlNode=xmlDocLocal.querySelector("string");
+        if(urlNode?.textContent) addPreview(urlNode.textContent,'html');
+      }
+      else if(!f.name.endsWith(".html")) addPreview(url,'other');
+    }
+  }catch(e){console.error("Ошибка при загрузке файлов:",e);}
+}
+
+loadRepoPreviews();
+</script>
+
+  <!-- 🔽 Вставляем этот блок в любое место страницы -->
+<section>
+  <style>
+    /* Контейнер */
+    .fav-floating {
+      position: fixed;
+      bottom: 20px;
+      right: 20px;
+      width: 60px;
+      height: 60px;
+      background: black;
+      border-radius: 50%;
+      transition: all 0.4s ease;
+      overflow: hidden;
+      display: flex;
+      align-items: center;
+      justify-content: flex-start;
+      z-index: 9999;
+      cursor: pointer;
+    }
+
+    /* Внутренний фавикон (иконка + точки) */
+    .fav-floating .fav-icon {
+      width: 60px;
+      height: 60px;
+      flex: 0 0 auto;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .fav-floating .fav-icon svg {
+      width: 40px;
+      height: 40px;
+    }
+
+    /* Расширение контейнера */
+    .fav-floating:hover {
+      width: 180px;
+      border-radius: 40px;
+    }
+
+    /* Ссылка-стрелка */
+    .fav-floating a {
+      margin-left: auto;
+      margin-right: 20px;
+      color: white;
+      text-decoration: none;
+      font-size: 26px;
+      opacity: 0;
+      transition: opacity 0.3s ease;
+    }
+
+    /* Появление стрелки */
+    .fav-floating:hover a {
+      opacity: 1;
+    }
+  </style>
+
+  <div class="fav-floating">
+    <div class="fav-icon">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
+        <circle cx="50" cy="50" r="45" fill="black"/>
+        <circle cx="35" cy="35" r="5" fill="white"/>
+        <circle cx="65" cy="35" r="5" fill="white"/>
+        <circle cx="50" cy="65" r="5" fill="white"/>
+      </svg>
+    </div>
+    <!-- ✏️ Редактируйте ссылку здесь -->
+    <a href="https://indexmod.github.io/chorus/angry-by-andr-o-dei.html" target="_blank" title="A N G R Y">&#10140;</a>
+  </div>
+</section>
+<!-- 🔼 Конец блока -->
+</body>
+</html>
