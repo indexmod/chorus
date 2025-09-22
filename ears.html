@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>E A R S</title>
+<style>
+body {
+  margin: 0;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100vh;
+  background: #fff;
+  font-family: sans-serif;
+  cursor: pointer;
+}
+
+.container {
+  position: relative;
+  width: 1200px;
+  height: 400px;
+  overflow: visible;
+}
+
+/* Полупрозрачный квадрат */
+.square {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 200px;
+  height: 200px;
+  background: rgba(0, 0, 0, 0.45); /* прозрачность */
+  transform: translate(-50%, -50%);
+  z-index: 5;
+}
+
+/* Уши */
+.earA, .earB {
+  position: absolute;
+  top: 50%;
+  width: 200px;
+  height: 200px;
+  background: rgba(0, 0, 0, 0.45);
+  border-radius: 50%;
+  transform: translateY(-50%);
+}
+
+/* Левое ухо */
+.earA {
+  left: 50%;
+  transform: translateX(-300px) translateY(-50%);
+  z-index: 1; /* за квадратом */
+  animation: moveA 4s infinite ease-in-out;
+}
+
+/* Правое ухо */
+.earB {
+  left: 50%;
+  transform: translateX(100px) translateY(-50%);
+  z-index: 10; /* перед квадратом */
+  animation: moveB 4s infinite ease-in-out;
+}
+
+/* Анимация движения ушей */
+@keyframes moveA {
+  0%   { transform: translateX(-300px) translateY(-50%) scaleX(1); }
+  50%  { transform: translateX(-100px) translateY(-50%) scaleX(0.1); }
+  100% { transform: translateX(100px) translateY(-50%) scaleX(1); }
+}
+
+@keyframes moveB {
+  0%   { transform: translateX(100px) translateY(-50%) scaleX(1); }
+  50%  { transform: translateX(-100px) translateY(-50%) scaleX(0.1); }
+  100% { transform: translateX(-300px) translateY(-50%) scaleX(1); }
+}
+
+/* Контейнер для глаз */
+.eyes {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 0;
+  height: 0;
+  transform-origin: center;
+  animation: rotateEyes 4s linear infinite;
+  z-index: 6; /* между квадратом и ухом B */
+}
+
+/* Отдельные глаза */
+.eye {
+  position: absolute;
+  width: 40px;
+  height: 40px;
+  background: rgba(0,0,0,0.45);
+  border-radius: 50%;
+  top: -20px; /* центрирование по вертикали */
+}
+
+.eye.left {
+  left: -50px; /* левый глаз */
+}
+
+.eye.right {
+  left: 50px; /* правый глаз */
+}
+
+/* Анимация вращения глаз */
+@keyframes rotateEyes {
+  0%   { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+</style>
+</head>
+<body>
+<div class="container">
+  <div class="square"></div>
+  <div class="earA"></div>
+  <div class="earB"></div>
+
+  <!-- Глаза -->
+  <div class="eyes">
+    <div class="eye left"></div>
+    <div class="eye right"></div>
+  </div>
+</div>
+
+<script>
+const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+let osc, gain;
+let isPlaying = false;
+
+function createSound() {
+  osc = audioCtx.createOscillator();
+  gain = audioCtx.createGain();
+  osc.type = "sine";
+  osc.connect(gain);
+  gain.connect(audioCtx.destination);
+  osc.start();
+}
+
+function modulate() {
+  if (!osc) return;
+  const now = audioCtx.currentTime;
+  const cycle = 4; // длительность анимации
+  const phase = (now % cycle) / cycle;
+  const freq = 220 + Math.sin(phase * 2 * Math.PI) * 200;
+  osc.frequency.setValueAtTime(freq, now);
+  requestAnimationFrame(modulate);
+}
+
+document.body.addEventListener("click", () => {
+  if (!isPlaying) {
+    if (audioCtx.state === "suspended") audioCtx.resume();
+    createSound();
+    gain.gain.setValueAtTime(0.3, audioCtx.currentTime);
+    modulate();
+    isPlaying = true;
+  } else {
+    gain.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime + 0.5);
+    setTimeout(() => {
+      osc.stop();
+      osc.disconnect();
+      gain.disconnect();
+      osc = null;
+      gain = null;
+    }, 600);
+    isPlaying = false;
+  }
+});
+</script>
+</body>
+</html>
