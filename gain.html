@@ -1,0 +1,198 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>VHS Vibrating Circle with Click-to-Start Drone</title>
+<style>
+:root { --size:500px; }
+html,body {
+  height:100%; margin:0; background:#000;
+  display:flex; align-items:center; justify-content:center;
+  font-family: monospace; color:#0f0; overflow:hidden; flex-direction: column;
+}
+.time-display {
+  position:absolute; top:10px; left:10px;
+  font-size:18px; letter-spacing:2px;
+  text-shadow:0 0 3px #0f0, 0 0 5px #0f0;
+}
+.dot {
+  width:var(--size); height:var(--size);
+  background:#fff; border-radius:50%;
+  box-shadow:0 0 20px 8px rgba(0,0,255,0.8);
+  will-change:transform; position:relative; filter:contrast(1.3) brightness(1.2);
+  overflow:hidden; animation:flicker 0.15s infinite alternate;
+  margin-top:50px;
+}
+.dot::before {
+  content:''; position:absolute; top:0; left:0;
+  width:100%; height:100%; border-radius:50%;
+  background:repeating-linear-gradient(0deg, rgba(255,255,255,0.02), rgba(255,255,255,0.02) 1px, transparent 1px, transparent 2px);
+  pointer-events:none; mix-blend-mode:overlay; animation:noise 0.08s steps(2) infinite;
+}
+.dot::after {
+  content:''; position:absolute; top:0; left:0;
+  width:100%; height:100%; border-radius:50%;
+  background: radial-gradient(circle, rgba(255,0,0,0.05) 0%, transparent 70%),
+              radial-gradient(circle, rgba(0,255,0,0.05) 0%, transparent 70%),
+              radial-gradient(circle, rgba(0,0,255,0.05) 0%, transparent 70%);
+  mix-blend-mode:screen; animation:colorShift 0.12s infinite alternate;
+}
+@keyframes flicker { 0%,100%{opacity:1;} 50%{opacity:0.95;} }
+@keyframes noise {
+  0%{transform:translate(0,0) scaleX(1); opacity:0.03;}
+  25%{transform:translate(-2px,1px) scaleX(1.02); opacity:0.05;}
+  50%{transform:translate(2px,-1px) scaleX(0.98); opacity:0.02;}
+  75%{transform:translate(-1px,2px) scaleX(1.01); opacity:0.04;}
+  100%{transform:translate(0,0) scaleX(1); opacity:0.03;}
+}
+@keyframes colorShift {
+  0%{transform:translate(0,0) scale(1);}
+  50%{transform:translate(-2px,1px) scale(1.02);}
+  100%{transform:translate(2px,-1px) scale(0.98);}
+}
+button {
+  padding: 10px 20px; font-size: 16px; cursor:pointer;
+  margin-top: 20px; background:#111; color:#0f0; border:1px solid #0f0;
+}
+</style>
+</head>
+<body>
+<div class="time-display" id="time"></div>
+<div class="dot" aria-hidden="true"></div>
+<button id="startBtn">Click to Start</button>
+
+<script>
+// Вибрация круга
+const dot = document.querySelector('.dot');
+const amp = 1; const freq = 150;
+function randomOffset(){ const x=(Math.random()*2-1)*amp; const y=(Math.random()*2-1)*amp; dot.style.transform=`translate(${x}px,${y}px)`;}
+setInterval(randomOffset,1000/freq);
+
+// Время
+const timeDisplay = document.getElementById('time');
+function updateTime(){
+  const now = new Date();
+  const h=String(now.getHours()).padStart(2,'0');
+  const m=String(now.getMinutes()).padStart(2,'0');
+  const s=String(now.getSeconds()).padStart(2,'0');
+  timeDisplay.textContent=`${h}:${m}:${s}`;
+}
+setInterval(updateTime,1000);
+updateTime();
+
+// Запуск дрона по клику
+const btn = document.getElementById('startBtn');
+btn.addEventListener('click',()=>{
+  btn.style.display='none'; // прячем кнопку
+
+  const audioCtx = new (window.AudioContext||window.webkitAudioContext)();
+  const osc = audioCtx.createOscillator();
+  const gainNode = audioCtx.createGain();
+
+  osc.type='sine';
+  osc.frequency.setValueAtTime(20, audioCtx.currentTime); // 40Hz
+  gainNode.gain.setValueAtTime(0.9, audioCtx.currentTime);
+
+  osc.connect(gainNode);
+  gainNode.connect(audioCtx.destination);
+  osc.start();
+
+  // LFO для легкой модуляции
+  const lfo = audioCtx.createOscillator();
+  const lfoGain = audioCtx.createGain();
+  lfo.frequency.setValueAtTime(0.2, audioCtx.currentTime); // 0.2Hz
+  lfoGain.gain.setValueAtTime(10, audioCtx.currentTime);
+  lfo.connect(lfoGain);
+  lfoGain.connect(osc.frequency);
+  lfo.start();
+
+  // Добавим лёгкий шум для VHS-потрескивания
+  const bufferSize = 2*audioCtx.sampleRate;
+  const noiseBuffer = audioCtx.createBuffer(1, bufferSize, audioCtx.sampleRate);
+  const output = noiseBuffer.getChannelData(0);
+  for(let i=0;i<bufferSize;i++) output[i]=(Math.random()*2-1)*0.02;
+  const noise = audioCtx.createBufferSource();
+  noise.buffer = noiseBuffer;
+  noise.loop = true;
+  const noiseGain = audioCtx.createGain();
+  noiseGain.gain.setValueAtTime(0.50, audioCtx.currentTime);
+  noise.connect(noiseGain).connect(audioCtx.destination);
+  noise.start();
+});
+</script>
+<!-- 🔽 Вставляем этот блок в любое место страницы -->
+<section>
+<style>
+  /* Контейнер */
+  .fav-floating {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    width: 60px;
+    height: 60px;
+    background: black;
+    border-radius: 50%;
+    transition: all 0.4s ease;
+    overflow: hidden;
+    display: flex;
+    align-items: center;
+    justify-content: flex-start;
+    z-index: 9999;
+    cursor: pointer;
+  }
+
+  /* Внутренний фавикон (иконка + точки) */
+  .fav-floating .fav-icon {
+    width: 60px;
+    height: 60px;
+    flex: 0 0 auto;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .fav-floating .fav-icon svg {
+    width: 40px;
+    height: 40px;
+  }
+
+  /* Расширение контейнера */
+  .fav-floating:hover {
+    width: 180px;
+    border-radius: 40px;
+  }
+
+  /* Ссылка-стрелка */
+  .fav-floating a {
+    margin-left: auto;
+    margin-right: 20px;
+    color: white;
+    text-decoration: none;
+    font-size: 26px;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+  }
+
+  /* Появление стрелки */
+  .fav-floating:hover a {
+    opacity: 1;
+  }
+</style>
+
+<div class="fav-floating">
+  <div class="fav-icon">
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
+      <circle cx="50" cy="50" r="45" fill="black"/>
+      <circle cx="35" cy="35" r="5" fill="white"/>
+      <circle cx="65" cy="35" r="5" fill="white"/>
+      <circle cx="50" cy="65" r="5" fill="white"/>
+    </svg>
+  </div>
+  <!-- ✏️ Редактируйте ссылку здесь -->
+  <a href="https://indexmod.github.io/chorus/mask-spiral-by-andr-o-dei.html" target="_blank" title="M A S K">&#10140;</a>
+</div>
+</section>
+<!-- 🔼 Конец блока -->
+</body>
+</html>
