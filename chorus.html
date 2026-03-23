@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<title>Artwork precise 8x4</title>
+<style>
+  body {
+    margin: 0;
+    background: #f0f0f0;
+    display:flex;
+    justify-content:center;
+    align-items:center;
+    height:100vh;
+  }
+</style>
+</head>
+<body>
+
+<svg width="1200" height="600" viewBox="0 0 1200 600"
+     xmlns="http://www.w3.org/2000/svg">
+
+<rect width="1200" height="600" fill="white"/>
+
+<g id="art"></g>
+
+<script>
+const svg = document.getElementById("art");
+
+const cols = 8;
+const rows = 4;
+
+const w = 150;
+const h = 150;
+
+function rnd(n=2){ return (Math.random()*n*2 - n); }
+
+// 🎨 Цвета — выстроены по фото (слева холод → справа тёплый/пурпур)
+const colors = [
+  ["#0b7d6e","#f2b705","#f6c343","#e9c7a6","#dcdcff","#9db4ff","#ffc1d6","#f08ab0"],
+  ["#065f5b","#ff8c00","#f2c27b","#e6d0b8","#c3c9ff","#6f85ff","#e09ac7","#ff6fa3"],
+  ["#0aa5b5","#c58b2b","#e7d9c9","#caa57b","#a87bff","#7b3cff","#ff4fd8","#ff2db2"],
+  ["#087c86","#ffffff","#ffffff","#ffffff","#f7cbd3","#d65aa3","#9c1f5f","#6e0038"]
+];
+
+for (let r = 0; r < rows; r++) {
+  for (let c = 0; c < cols; c++) {
+
+    let x = c * w;
+    let y = r * h;
+
+    let jx = rnd(1.2);
+    let jy = rnd(1.2);
+
+    // ячейка
+    let rect = document.createElementNS("http://www.w3.org/2000/svg","rect");
+    rect.setAttribute("x", x + jx);
+    rect.setAttribute("y", y + jy);
+    rect.setAttribute("width", w);
+    rect.setAttribute("height", h);
+    rect.setAttribute("fill", colors[r][c]);
+    rect.setAttribute("stroke", "black");
+    rect.setAttribute("stroke-width", 9);
+    rect.setAttribute("stroke-linejoin","round");
+    svg.appendChild(rect);
+
+    // центр лица
+    let cx = x + w/2 + rnd(1);
+    let cy = y + h/2 + rnd(1);
+
+    // круг
+    let face = document.createElementNS("http://www.w3.org/2000/svg","circle");
+    face.setAttribute("cx", cx);
+    face.setAttribute("cy", cy);
+    face.setAttribute("r", 36 + rnd(1));
+    face.setAttribute("fill", "black");
+    svg.appendChild(face);
+
+    // глаза
+    for (let i = 0; i < 2; i++) {
+      let eye = document.createElementNS("http://www.w3.org/2000/svg","circle");
+      eye.setAttribute("cx", cx + (i ? 13 : -13) + rnd(2));
+      eye.setAttribute("cy", cy - 11 + rnd(2));
+      eye.setAttribute("r", 3.2 + rnd(0.5));
+      eye.setAttribute("fill", "white");
+      svg.appendChild(eye);
+    }
+
+    // рот
+    let mouth = document.createElementNS("http://www.w3.org/2000/svg","circle");
+    mouth.setAttribute("cx", cx + rnd(2));
+    mouth.setAttribute("cy", cy + 13 + rnd(2));
+    mouth.setAttribute("r", 4.2 + rnd(0.6));
+    mouth.setAttribute("fill", "#ff2a2a");
+    svg.appendChild(mouth);
+
+  }
+}
+</script>
+
+</svg>
+
+</body>
+</html>
